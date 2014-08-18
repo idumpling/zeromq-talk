@@ -1,0 +1,971 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Introduction to ØMQ</title>
+  <style type="text/css">
+    body {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: #222;
+  background-color: #f7f7f7;
+  font-size: 100%;
+}
+
+.slide {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 0; right: 0;
+}
+
+.slide-content {
+  width: 800px;
+  height: 600px;
+  overflow: hidden;
+  margin: 80px auto 0 auto;
+  padding: 30px;
+
+  font-weight: 200;
+  font-size: 200%;
+  line-height: 1.375;
+}
+
+.controls {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+}
+
+.arrow {
+  width: 0; height: 0;
+  border: 30px solid #333;
+  float: left;
+  margin-right: 30px;
+
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.prev {
+  border-top-color: transparent;
+  border-bottom-color: transparent;
+  border-left-color: transparent;
+
+  border-left-width: 0;
+  border-right-width: 50px;
+}
+
+.next {
+  border-top-color: transparent;
+  border-bottom-color: transparent;
+  border-right-color: transparent;
+
+  border-left-width: 50px;
+  border-right-width: 0;
+}
+
+.prev:hover {
+  border-right-color: #888;
+  cursor: pointer;
+}
+
+.next:hover {
+  border-left-color: #888;
+  cursor: pointer;
+}
+
+h1 {
+  font-size: 300%;
+  line-height: 1.2;
+  text-align: center;
+  margin: 170px 0 0;
+}
+
+h2 {
+  font-size: 100%;
+  line-height: 1.2;
+  margin: 5px 0;
+  text-align: center;
+  font-weight: 200;
+}
+
+h3 {
+  font-size: 140%;
+  line-height: 1.2;
+  border-bottom: 1px solid #aaa;
+  margin: 0;
+  padding-bottom: 15px;
+}
+
+ul {
+  padding: 20px 0 0 60px;
+  font-weight: 200;
+  line-height: 1.375;
+}
+
+.author h1 {
+  font-size: 170%;
+  font-weight: 200;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.author h3 {
+  font-weight: 100;
+  text-align: center;
+  font-size: 95%;
+  border: none;
+}
+
+a {
+  text-decoration: none;
+  color: #44a4dd;
+}
+
+a:hover {
+  color: #66b5ff;
+}
+
+pre {
+  font-size: 60%;
+  line-height: 1.3;
+}
+
+.progress {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+
+.progress-bar {
+  width: 0%;
+  height: 3px;
+  background-color: #b4b4b4;
+
+  -webkit-transition: width 0.05s ease-out;
+  -moz-transition: width 0.05s ease-out;
+  -o-transition: width 0.05s ease-out;
+  transition: width 0.05s ease-out;
+}
+
+.hidden {
+  display: none;
+}
+
+@media (max-width: 850px) {
+
+  body {
+    font-size: 70%;
+  }
+
+  .slide-content {
+    width: auto;
+  }
+
+  img {
+    width: 100%;
+  }
+
+  h1 {
+    margin-top: 120px;
+  }
+
+  .prev, .prev:hover {
+    border-right-color: rgba(135, 135, 135, 0.5);
+  }
+
+  .next, .next:hover {
+    border-left-color: rgba(135, 135, 135, 0.5);
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    font-size: 50%;
+    overflow: hidden;
+  }
+
+  .slide-content {
+    padding: 10px;
+    margin-top: 10px;
+    height: 340px;
+  }
+
+  h1 {
+    margin-top: 50px;
+  }
+
+  ul {
+    padding-left: 25px;
+  }
+}
+
+@media print {
+  * {
+    -webkit-print-color-adjust: exact;
+  }
+
+  @page {
+    size: letter;
+  }
+
+  .hidden {
+    display: inline;
+  }
+
+  html {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  body {
+    margin: 0 auto !important;
+    border: 0;
+    padding: 0;
+    float: none !important;
+    overflow: visible;
+    background: none !important;
+    font-size: 52%;
+  }
+
+  .progress, .controls {
+    display: none;
+  }
+
+  .slide {
+    position: static;
+  }
+
+  .slide-content {
+    border: 1px solid #222;
+    margin-top: 0;
+    margin-bottom: 40px;
+    height: 3.5in;
+    overflow: visible;
+  }
+
+  .slide:nth-child(even) {
+    /* 2 slides per page */
+    page-break-before: always;
+  }
+}
+
+/*
+github.com style (c) Vasily Polovnyov <vast@whiteants.net>
+*/
+
+code, pre {
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  overflow: auto;
+  padding: 6px 10px;
+}
+
+code {
+  padding: 0 5px;
+}
+
+pre>code {
+  margin: 0; padding: 0;
+  border: none;
+  background: transparent;
+}
+
+pre .comment,
+pre .template_comment,
+pre .diff .header,
+pre .javadoc {
+  color: #998;
+  font-style: italic
+}
+
+pre .keyword,
+pre .css .rule .keyword,
+pre .winutils,
+pre .javascript .title,
+pre .nginx .title,
+pre .subst,
+pre .request,
+pre .status {
+  color: #333;
+  font-weight: bold
+}
+
+pre .number,
+pre .hexcolor,
+pre .ruby .constant {
+  color: #099;
+}
+
+pre .string,
+pre .tag .value,
+pre .phpdoc,
+pre .tex .formula {
+  color: #d14
+}
+
+pre .title,
+pre .id {
+  color: #900;
+  font-weight: bold
+}
+
+pre .javascript .title,
+pre .lisp .title,
+pre .clojure .title,
+pre .subst {
+  font-weight: normal
+}
+
+pre .class .title,
+pre .haskell .type,
+pre .vhdl .literal,
+pre .tex .command {
+  color: #458;
+  font-weight: bold
+}
+
+pre .tag,
+pre .tag .title,
+pre .rules .property,
+pre .django .tag .keyword {
+  color: #000080;
+  font-weight: normal
+}
+
+pre .attribute,
+pre .variable,
+pre .lisp .body {
+  color: #008080
+}
+
+pre .regexp {
+  color: #009926
+}
+
+pre .class {
+  color: #458;
+  font-weight: bold
+}
+
+pre .symbol,
+pre .ruby .symbol .string,
+pre .lisp .keyword,
+pre .tex .special,
+pre .prompt {
+  color: #990073
+}
+
+pre .built_in,
+pre .lisp .title,
+pre .clojure .built_in {
+  color: #0086b3
+}
+
+pre .preprocessor,
+pre .pi,
+pre .doctype,
+pre .shebang,
+pre .cdata {
+  color: #999;
+  font-weight: bold
+}
+
+pre .deletion {
+  background: #fdd
+}
+
+pre .addition {
+  background: #dfd
+}
+
+pre .diff .change {
+  background: #0086b3
+}
+
+pre .chunk {
+  color: #aaa
+}
+
+body {
+  background-color: #222;
+  color: #eee;
+}
+
+h1, h3 {
+  font-family: Impact;
+  font-weight: bold;
+  font-style: italic;
+}
+
+pre code {
+  color: #ccc;
+  font-size: 140%;
+}
+
+.keyword {
+  color: #0086b3 !important;
+  font-weight: inherit !important;
+}
+
+.tag {
+  color: #900 !important;
+}
+
+code {
+  background-color: inherit;
+}
+
+em {
+  border-bottom: 1px solid #666;
+}
+
+  </style>
+</head>
+<body>
+    <div class="progress">
+    <div class="progress-bar"></div>
+  </div>
+
+  <div class="slide ----------------------------------------------------------------------------" id="slide-1">
+    <section class="slide-content"><h1 id="introduction-to-mq">Introduction to ØMQ</h1>
+<h2 id="-xin-gao-http-twitter-com-xgao622-"><a href="http://twitter.com/@xgao622">Xin Gao</a></h2>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-2">
+    <section class="slide-content"><h3 id="motivation">Motivation</h3>
+<h4 id="for-robotx-https-github-com-idumpling-robotx-distributed-way">For <a href="https://github.com/idumpling/robotx">RobotX</a> Distributed Way</h4>
+<p>How to make messaging work without a central server<br>while not just use the low level Berkeley socket interface?</p>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-3">
+    <section class="slide-content"><h3 id="what-is-mq">What is ØMQ</h3>
+<p>It&#39;s not a message system;<br>It is a messaging / communication library to be used programmatically.</p>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-4">
+    <section class="slide-content"><h3 id="zen-of-mq">Zen of ØMQ</h3>
+<p>Zero</p>
+<ul>
+<li>Broker</li>
+<li>Latency (best effort)</li>
+<li>Administration</li>
+<li>Cost</li>
+<li>Waste</li>
+</ul>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-5">
+    <section class="slide-content"><h3 id="-mq-goal">ØMQ Goal</h3>
+<h1 id="-to-become-part-of-the-standard-networking-stack-">&quot;To become part of the standard networking stack&quot;</h1>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-6">
+    <section class="slide-content"><h3 id="-mq-goal">ØMQ Goal</h3>
+<h1 id="-and-then-the-linux-kernel-">&quot;And then the Linux kernel&quot;</h1>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-7">
+    <section class="slide-content"><h3 id="fixing-the-networking-world">Fixing the Networking World</h3>
+<h4 id="-center-realworld-imgs-realworld-png-center-"><center><img src="imgs/realworld.png" alt="realworld"></center></h4>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-8">
+    <section class="slide-content"><h3 id="-mq-history">ØMQ History</h3>
+<ul>
+<li>2004: iMatix created AMQP as a contractor for JP Morgan.</li>
+<li>2005: iMatix published OpenAMQ.</li>
+<li>2007: iMatix started the ØMQ project.</li>
+<li>2010: iMatix left the AMQP standard committee.</li>
+<li>2012: Two of original devs forked ØMQ as Crossroads I/O.</li>
+<li>2013: Martin Sustrik started nanomsg.</li>
+<li>2013: Pieter Hintjens announced a new draft of the ZMTP wire-level protocol.</li>
+</ul>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-9">
+    <section class="slide-content"><h3 id="why-mq">Why ØMQ</h3>
+<ul>
+<li>Performance<ul>
+<li>Lower latency</li>
+<li>Higher throughput</li>
+</ul>
+</li>
+<li>Simplicity</li>
+<li>Scalability</li>
+</ul>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-10">
+    <section class="slide-content"><h3 id="-mq-language-bindings">ØMQ Language Bindings</h3>
+<p>ØMQ comes with the low-level C API. High-level bindings exist in 40+ languages including:   </p>
+<p>Probably the most impressive binding is PyZMQ:-)</p>
+<p>Python, Perl, PHP, Ruby, Go, Erlang, Node.js, Java, Scala, Clojure, 
+C/C++, Objective-C, C#, F#, Delphi, Basic, Haskell, Lua , Racket
+CL, Felix, Q, Tcl, Ada, Haxe, ooc, ...</p>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-11">
+    <section class="slide-content"><h3 id="-mq-install">ØMQ Install</h3>
+<p>On RHEL, Cent OS, Fedora</p>
+<pre><code>  $ yum install -y pkgconfig libtool gcc-c++ uuid
+  $ wget http://download.zeromq.org/zeromq-4.0.4.tar.gz
+  $ tar xvf zeromq-4.0.4.tar.gz
+  $ cd zeromq-4.0.4/
+  $ ./configure
+  $ make
+  $ make install
+  $ echo /usr/local/lib &gt; /etc/ld.so.conf.d/local.conf
+  $ ldconfig</code></pre>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-12">
+    <section class="slide-content"><h3 id="-mq-language-bindings-install">ØMQ Language Bindings Install</h3>
+<ul>
+<li><p>PyZMQ</p>
+<pre><code>$ pip install pyzmq </code></pre>
+</li>
+<li><p>GoZMQ:</p>
+<pre><code>$ export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+$ go get -tags zmq_4_x github.com/alecthomas/gozmq</code></pre>
+</li>
+<li><p>...</p>
+</li>
+</ul>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-13">
+    <section class="slide-content"><h3 id="-mq-architecture">ØMQ Architecture</h3>
+<ul>
+<li>ØMQ is running multiple worker threads that handle the asynchronous part of the communication: </li>
+<li>various objects live in the worker threads.  <ul>
+<li>Do connection management.</li>
+<li>Handle data transfer itself.</li>
+</ul>
+</li>
+<li>the whole system has to become fully asynchronous. </li>
+<li>No object can afford to do a blocking operation,   </li>
+<li>ØMQ uses a lock-free queue in pipe objects to pass messages between the user&#39;s threads and ØMQ&#39;s worker threads.</li>
+</ul>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-14">
+    <section class="slide-content"><h3 id="implementing-a-msg-layer-with-mq">Implementing a MSG Layer with ØMQ</h3>
+<p>Three-step approach:</p>
+<ul>
+<li>Choosing a transport </li>
+<li>Setting up the infrastructure</li>
+<li>Selecting a message pattern</li>
+</ul>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-15">
+    <section class="slide-content"><h3 id="-mq-context">ØMQ Context</h3>
+<p>Before using any ØMQ library functions, the caller must initialize a ØMQ context:</p>
+<pre><code class="lang-python"><span class="keyword">import</span> zmq
+
+context = zmq.Context()</code></pre>
+<p>Contexts are thread safe unlike sockets. 
+An application can create and manage multiple contexts.</p>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-16">
+    <section class="slide-content"><h3 id="-mq-sockets">ØMQ Sockets</h3>
+<p>ØMQ sockets are created from the initialized context:</p>
+<pre><code class="lang-python">socket = context.socket(zmq.REP)</code></pre>
+<ul>
+<li>ØMQ sockets are of certain types which enable one of the various communication patterns.</li>
+<li>ØMQ socket type must be passed during socket creation.</li>
+</ul>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-17">
+    <section class="slide-content"><h3 id="-mq-sockets-vs-tcp-sockets">ØMQ Sockets vs TCP Sockets</h3>
+<ul>
+<li>ØMQ sockets carry messages, like UDP, rather than a stream of bytes as TCP does.   </li>
+<li>ØMQ sockets do their I/O in a background thread. </li>
+<li>ØMQ sockets have one-to-N routing behavior built-in.</li>
+</ul>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-18">
+    <section class="slide-content"><h3 id="-mq-messaging-patterns">ØMQ Messaging Patterns</h3>
+<p><center>Pair Pattern </center></p>
+<p><center><img src="imgs/pair.png" alt="pair pic"></center></p>
+<p></p></section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-19">
+    <section class="slide-content"><h3 id="-mq-messaging-patterns">ØMQ Messaging Patterns</h3>
+<p><center>Pair Pattern </center>
+Paired sockets are very similar to regular sockets.</p>
+<ul>
+<li>The communication is bidirectional.</li>
+<li>There is no specific state stored within the socket.</li>
+<li>There can only be one connected peer.</li>
+<li>The server listens on a certain port and a client connects to it.</li>
+</ul>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-20">
+    <section class="slide-content"><h3 id="-mq-messaging-patterns">ØMQ Messaging Patterns</h3>
+<p><center>Request/Reply Pattern</center></p>
+<p><center><img src="imgs/reqrep.png" alt="reqrep pic"></center></p>
+<p></p></section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-21">
+    <section class="slide-content"><h3 id="-mq-messaging-patterns">ØMQ Messaging Patterns</h3>
+<p><center>Request/Reply Pattern</center>
+Most basic pattern is client/server model,<br>where client sends a request and server replies to the request.</p>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-22">
+    <section class="slide-content"><h3 id="-mq-messaging-patterns">ØMQ Messaging Patterns</h3>
+<p><center>Pub/Sub Pattern</center></p>
+<p><center><img src="imgs/pubsub.png" alt="pubsub pic"></center></p>
+<p></p></section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-23">
+    <section class="slide-content"><h3 id="-mq-messaging-patterns">ØMQ Messaging Patterns</h3>
+<p><center>Pub/Sub Pattern</center>
+Publish/Subscribe is another classic pattern,<br>where senders of messages, called publishers,<br>do not program the messages to be sent directly to specific receivers, called subscribers.<br>Messages are published without the knowledge of what or if any subscriber of that knowledge exists.</p>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-24">
+    <section class="slide-content"><h3 id="-mq-messaging-patterns">ØMQ Messaging Patterns</h3>
+<p><center>Pipeline Pattern</center></p>
+<p><center><img src="imgs/pullpush.png" alt="pullpush pic"></center></p>
+<p></p></section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-25">
+    <section class="slide-content"><h3 id="-mq-messaging-patterns">ØMQ Messaging Patterns</h3>
+<p><center>Pipeline Pattern</center>
+Push and Pull sockets let you distribute messages to multiple workers, arranged in a pipeline.<br>A Push socket will distribute sent messages to its Pull clients evenly.<br>Data always flows down the pipeline, and each stage of the pipeline is connected to at least one node.<br>When a pipeline stage is connected to multiple nodes data is load-balanced among all connected nodes.</p>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-26">
+    <section class="slide-content"><h3 id="-mq-devices">ØMQ Devices</h3>
+<p><center>QUEUE</center></p>
+<p><center><img src="imgs/queue.png" alt="queue pic"></center></p>
+<p></p></section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-27">
+    <section class="slide-content"><h3 id="-mq-devices">ØMQ Devices</h3>
+<p><center>QUEUE</center>
+A forwarder for the request/response messaging pattern.<br>DEALER and ROUTER that let you do nonblocking request-response.<br>Think of REQ and DEALER sockets as &quot;clients&quot;<br>and REP and ROUTER sockets as &quot;servers&quot;.</p>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-28">
+    <section class="slide-content"><h3 id="-mq-devices">ØMQ Devices</h3>
+<p><center>FORWARDER</center></p>
+<p><center><img src="imgs/forwarder.png" alt="forwarder pic"></center></p>
+<p></p></section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-29">
+    <section class="slide-content"><h3 id="-mq-devices">ØMQ Devices</h3>
+<p><center>FORWARDER</center>
+A forwarder for the publish/subscribe messaging pattern.  </p>
+<ul>
+<li>We need XPUB and XSUB sockets because ØMQ does subscription forwarding from subscribers to publishers.   </li>
+<li>Just like QUEUE, which is like the request-reply broker,<br>FORWARDER is like the pub-sub proxy server.</li>
+</ul>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-30">
+    <section class="slide-content"><h3 id="-mq-devices">ØMQ Devices</h3>
+<p><center>STREAMER</center></p>
+<p><center><img src="imgs/streamer.png" alt="streamer pic"></center></p>
+<p></p></section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-31">
+    <section class="slide-content"><h3 id="-mq-devices">ØMQ Devices</h3>
+<p><center>STREAMER</center>
+A forwarder for the pipelined messaging pattern.  </p>
+<ul>
+<li>It is a device for parallelized pipeline messaging.   </li>
+<li>Acts as a broker that collects tasks from task feeders and supplies them to task workers.<p></p></li>
+</ul>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-32">
+    <section class="slide-content"><h3 id="transport-types">Transport Types</h3>
+<p>ØMQ provides 4 different transports:</p>
+<ul>
+<li>TCP: a network based transport<br>tcp://hostname:port  </li>
+<li>IPC: an Inter-Process communication model<br>ipc:///tmp/filename  </li>
+<li>INPROC: In-Process communication model<br>inproc://name  </li>
+<li>MULTICAST: multicast via PGM, possibly encapsulated in UDP<br>pgm://interface:address:port<br>epgm://interface:address:port</li>
+</ul>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-33">
+    <section class="slide-content"><h3 id="bind-or-connect">Bind or Connect</h3>
+<p>As a general rule of thumb,   </p>
+<ul>
+<li>The node that does zmq_bind() is a &quot;server&quot;, 
+sitting on a well-known network address</li>
+<li>The node which does zmq_connect() is a &quot;client&quot;, 
+with unknown or arbitrary network addresses.</li>
+</ul>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-34">
+    <section class="slide-content"><h3 id="examples">Examples</h3>
+<p><center>Hello World</center>
+<a href="http://zguide.zeromq.org/py:hwclient">hwclient.py</a></p>
+<pre><code class="lang-python"><span class="keyword">import</span> zmq
+
+context = zmq.Context()
+
+print(<span class="string">"Connecting to hello world server..."</span>)
+socket = context.socket(zmq.REQ)
+socket.connect(<span class="string">"tcp://localhost:5555"</span>)
+
+<span class="keyword">for</span> request <span class="keyword">in</span> range(<span class="number">10</span>):
+    print(<span class="string">"Sending request %s ..."</span> % request)
+    socket.send(<span class="string">b"Hello"</span>)
+
+    message = socket.recv()
+    print(<span class="string">"Received reply %s [ %s ]"</span> % (request, message))</code></pre>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-35">
+    <section class="slide-content"><h3 id="examples">Examples</h3>
+<p><center>Hello World</center>
+<a href="https://github.com/imatix/zguide/blob/master/examples/Python/hwserver.py">hwserver.py</a></p>
+<pre><code class="lang-python"><span class="keyword">import</span> time
+<span class="keyword">import</span> zmq
+
+context = zmq.Context()
+socket = context.socket(zmq.REP)
+socket.bind(<span class="string">"tcp://*:5555"</span>)
+
+<span class="keyword">while</span> <span class="built_in">True</span>:
+    message = socket.recv()
+    print(<span class="string">"Received request: %s"</span> % message)
+
+    time.sleep(<span class="number">1</span>)
+
+    socket.send(<span class="string">b"World"</span>)</code></pre>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-36">
+    <section class="slide-content"><h3 id="examples">Examples</h3>
+<p><center>Divide and Conquer</center></p>
+<p><center><img src="imgs/task.png" alt="task pic"></center></p>
+<p></p></section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-37">
+    <section class="slide-content"><h3 id="examples">Examples</h3>
+<p><center><a href="https://github.com/idumpling/robotx">RobotX</a></center></p>
+<p><center><img src="imgs/robotx.png" alt="task pic"></center></p>
+<p></p></section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-38">
+    <section class="slide-content"><h3 id="projects">Projects</h3>
+<center><a href="http://zeromq.org/docs:labs">ØMQ Labs</a></center>
+
+<ul>
+<li><a href="http://www.saltstack.com/">saltstack</a></li>
+<li><a href="http://zerorpc.dotcloud.com/">zerorpc</a></li>
+<li><a href="http://mongrel2.org/">The Mongrel2 Web Server</a></li>
+<li><a href="http://brubeck.io/index.html">Brubeck: Python web framework using 0MQ</a></li>
+<li><a href="http://blog.dotcloud.com/tag/zeromq">Dotcloud with ZMQ</a></li>
+<li>OpenStack with ZMQ <ul>
+<li><a href="http://www.slideshare.net/yatinkumbhare/zmq-in-context-of-openstack-31975405">Openstack Messaging with ZMQ</a></li>
+<li><a href="http://ewindisch.github.io/nova/">zeromq-rpc-plugin</a></li>
+<li><a href="https://etherpad.openstack.org/p/havana-rpc-zmq-for-ceilometer-and-quantum">ZeroMQ RPC for Ceilometer and Quantum</a></li>
+<li>...</li>
+</ul>
+</li>
+</ul>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-39">
+    <section class="slide-content"><h3 id="key-point">Key Point</h3>
+<h1 id="-mq-means-there-s-no-mq">ØMQ means there&#39;s NO MQ</h1>
+</section>
+  </div>
+  <div class="slide hidden ----------------------------------------------------------------------------" id="slide-40">
+    <section class="slide-content"><h3 id="external-links">External links</h3>
+<ul>
+<li><a href="http://zguide.zeromq.org/">ØMQ guide</a></li>
+<li><a href="http://pyvideo.org/video/442/pycon-2011--advanced-network-architectures-with-z">Advanced Network Architectures With ZeroMQ</a></li>
+<li><a href="http://www.aosabook.org/en/zeromq.html">ZeroMQ - The Architecture of Open Source Applications</a></li>
+</ul>
+</section>
+  </div>
+  <div class="slide hidden" id="slide-41">
+    <section class="slide-content"><div class="author">
+  <h1 class="name">Xin Gao</h1>
+    <h3 class="twitter">
+      <a href="http://twitter.com/@xgao622">@xgao622</a>
+    </h3>
+    <h3 class="url">
+      <a href="http://about.me/xgao">http://about.me/xgao</a>
+    </h3>
+</div>
+</section>
+  </div>
+
+  <div class="controls">
+    <div class="arrow prev"></div>
+    <div class="arrow next"></div>
+  </div>
+
+
+  <script type="text/javascript">
+    /**
+ * Returns the current page number of the presentation.
+ */
+function currentPosition() {
+  return parseInt(document.querySelector('.slide:not(.hidden)').id.slice(6));
+}
+
+
+/**
+ * Navigates forward n pages
+ * If n is negative, we will navigate in reverse
+ */
+function navigate(n) {
+  var position = currentPosition();
+  var numSlides = document.getElementsByClassName('slide').length;
+
+  /* Positions are 1-indexed, so we need to add and subtract 1 */
+  var nextPosition = (position - 1 + n) % numSlides + 1;
+
+  /* Normalize nextPosition in-case of a negative modulo result */
+  nextPosition = (nextPosition - 1 + numSlides) % numSlides + 1;
+
+  document.getElementById('slide-' + position).classList.add('hidden');
+  document.getElementById('slide-' + nextPosition).classList.remove('hidden');
+
+  updateProgress();
+  updateURL();
+  updateTabIndex();
+}
+
+
+/**
+ * Updates the current URL to include a hashtag of the current page number.
+ */
+function updateURL() {
+  window.history.replaceState({} , null, '#' + currentPosition());
+}
+
+
+/**
+ * Sets the progress indicator.
+ */
+function updateProgress() {
+  var progressBar = document.querySelector('.progress-bar');
+
+  if (progressBar !== null) {
+    var numSlides = document.getElementsByClassName('slide').length;
+    var position = currentPosition() - 1;
+    var percent = (numSlides === 1) ? 100 : 100 * position / (numSlides - 1);
+    progressBar.style.width = percent.toString() + '%';
+  }
+}
+
+
+/**
+ * Removes tabindex property from all links on the current slide, sets
+ * tabindex = -1 for all links on other slides. Prevents slides from appearing
+ * out of control.
+ */
+function updateTabIndex() {
+  var allLinks = document.querySelectorAll('.slide a');
+  var position = currentPosition();
+  var currentPageLinks = document.getElementById('slide-' + position).querySelectorAll('a');
+  var i;
+
+  for (i = 0; i < allLinks.length; i++) {
+    allLinks[i].setAttribute('tabindex', -1);
+  }
+
+  for (i = 0; i < currentPageLinks.length; i++) {
+    currentPageLinks[i].removeAttribute('tabindex');
+  }
+}
+
+/**
+ * Determines whether or not we are currently in full screen mode
+ */
+function isFullScreen() {
+  return document.fullscreenElement ||
+         document.mozFullScreenElement ||
+         document.webkitFullscreenElement ||
+         document.msFullscreenElement;
+}
+
+/**
+ * Toggle fullScreen mode on document element.
+ * Works on chrome (>= 15), firefox (>= 9), ie (>= 11), opera(>= 12.1), safari (>= 5).
+ */
+function toggleFullScreen() {
+  /* Convenient renames */
+  var docElem = document.documentElement;
+  var doc = document;
+
+  docElem.requestFullscreen =
+      docElem.requestFullscreen ||
+      docElem.msRequestFullscreen ||
+      docElem.mozRequestFullScreen ||
+      docElem.webkitRequestFullscreen.bind(docElem, Element.ALLOW_KEYBOARD_INPUT);
+
+  doc.exitFullscreen =
+      doc.exitFullscreen ||
+      doc.msExitFullscreen ||
+      doc.mozCancelFullScreen ||
+      doc.webkitExitFullscreen;
+
+  isFullScreen() ? doc.exitFullscreen() : docElem.requestFullscreen();
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  // Update the tabindex to prevent weird slide transitioning
+  updateTabIndex();
+
+  // If the location hash specifies a page number, go to it.
+  var page = window.location.hash.slice(1);
+  if (page) {
+    navigate(parseInt(page) - 1);
+  }
+
+  document.onkeydown = function (e) {
+    var kc = e.keyCode;
+
+    // left, down, H, J, backspace, PgUp - BACK
+    // up, right, K, L, space, PgDn - FORWARD
+    // enter - FULLSCREEN
+    if (kc === 37 || kc === 40 || kc === 8 || kc === 72 || kc === 74 || kc === 33) {
+      navigate(-1);
+    } else if (kc === 38 || kc === 39 || kc === 32 || kc === 75 || kc === 76 || kc === 34) {
+      navigate(1);
+    } else if (kc === 13) {
+      toggleFullScreen();
+    }
+  };
+
+  if (document.querySelector('.next') && document.querySelector('.prev')) {
+    document.querySelector('.next').onclick = function (e) {
+      e.preventDefault();
+      navigate(1);
+    };
+
+    document.querySelector('.prev').onclick = function (e) {
+      e.preventDefault();
+      navigate(-1);
+    };
+  }
+});
+
+
+  </script>
+</body>
+</html>
