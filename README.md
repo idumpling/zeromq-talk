@@ -1,4 +1,4 @@
-## zeromq-talk
+## ZeroMQ talk
 
 These are the slides for a talk on ZeroMQ.
 
