@@ -1,5 +1,0 @@
-<<<<<<< HEAD
-{"name":"Zeromq-talk","tagline":"Slides for a ZeroMQ talk I gave","body":"## zeromq-talk\r\n\r\nThese are the slides for a talk on ZeroMQ.\r\n\r\nYou can [view it here](http://idumpling.github.io/zeromq-talk).\r\n\r\nThis presentation (html file) was generated using [Cleaver](http://jdan.github.io/cleaver).\r\n\r\n    $ npm install -g cleaver\r\n    $ cleaver zeromq-talk.md\r\n","google":"","note":"Don't delete this file! It's used internally to help with page regeneration."}
-=======
-{"name":"Zeromq-talk","tagline":"Slides for a ZeroMQ talk I gave","body":"## ZeroMQ talk\r\n\r\nThese are the slides for a talk on ZeroMQ.\r\n\r\nYou can [view it here](http://idumpling.github.io/zeromq-talk).\r\n\r\nThis presentation (html file) was generated using [Cleaver](http://jdan.github.io/cleaver).\r\n\r\n    $ npm install -g cleaver\r\n    $ cleaver zeromq-talk.md\r\n","google":"","note":"Don't delete this file! It's used internally to help with page regeneration."}
->>>>>>> 29de1409fc84dc2e205b023ed3fa25c3ff4698ad
